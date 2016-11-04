@@ -1,0 +1,31 @@
+version: '2'
+
+services:
+
+  c1:
+    image: nginx
+    container_name: c1.gbifsweden.se
+    hostname: c1.gbifsweden.se
+
+  c2:
+    image: nginx
+    container_name: c2.gbifsweden.se
+
+  c3:
+    image: nginx
+    container_name: gbifsweden.se
+
+  dnsmasq:
+    image: andyshinn/dnsmasq:2.76
+    command: --log-facility=-
+    cap_add: 
+      - NET_ADMIN 
+    ports:
+      - 172.17.0.1:53:53/tcp
+      - 172.17.0.1:53:53/udp
+#       - 127.0.0.11:53:53/tcp
+#       - 127.0.0.11:53:53/udp
+#       - 127.0.1.1:53:53/tcp
+#       - 127.0.1.1:53:53/udp
+#      - 53:53/tcp
+#      - 53:53/udp

@@ -1,0 +1,30 @@
+version: '2'
+
+services:
+
+  c1:
+    image: nginx
+    container_name: c1.gbifsweden.se
+    hostname: c1.gbifsweden.se
+    environment:
+      - DNSDOCK_ALIAS=c1,www1
+
+  c2:
+    image: nginx
+    container_name: c2.gbifsweden.se
+    environment:
+      - DNSDOCK_ALIAS=c2,www2
+
+  c3:
+    image: nginx
+    container_name: gbifsweden.se
+    environment:
+      - DNSDOCK_ALIAS=gbifsweden.se,c3,www3
+
+  dnsdock:
+#    image: tonistiigi/dnsdock:amd64-1.13.1
+    image: aacebedo/dnsdock:v1.15.0-amd64
+    ports:
+      - 172.17.0.1:53:53/udp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
