@@ -1,27 +1,24 @@
 # DNS and Docker
 
-Tired of editing `/etc/hosts` when testing docker containers from the host? You can set up `dnsmasq` or `dnsdock` using docker containers and use those to resolve names from your host machine where the docker daemon runs.
-
-This repository contains two directories demonstrating two approaches for how to do this (using dnsmasq and dnsdock respectively).
-
-Each direcotry has a `docker-compose.yml` file defining docker micro-services and a `Makefile` that manages the services (start, stop) and runs tests etc.
-
-## HOWTO
+Tired of editing `/etc/hosts` when testing docker containers from the host? 
 
 For docker containers to resolve each other using (service and container) names, an embedded Docker DNS can be utilized. 
 
-This works also using `docker-compose`, if the .yml file beings with "version: '2'". 
+You can set up `dnsmasq` or `dnsdock` and use those to resolve names from your host machine where the docker daemon runs.
 
-For making sure that the host running the docker daemon also can resolve a name in the same way as names are resolved internally between containers, the host machine running the containers need to be setup to resolve names not only using its default configures DNS resolution, but also in addtion, using a separate Docker DNS container running locally on the host. 
+## HOW
 
-In short:
+This repository contains two directories demonstrating two approaches for how to do this (using dnsmasq and dnsdock respectively).For name resolution, the classic solution is `dnsmasq` but there is also a more Docker-tailored variant that can be used; `dnsdock`, which seems to be popular as an alternative to "skydns" and other heavier service discovery solutions.
+
+This setup works also using the convenient `docker-compose` wrapper, if the .yml file starts with "version: '2'". In this project, you will see that each directory has a `docker-compose.yml` file defining docker micro-services and a `Makefile` that manages the services (start, stop) and runs tests etc.
+
+For making sure that the host running the docker daemon also can resolve a name in the same way as names are resolved internally between containers, the host machine running the containers need to be setup to resolve names not only using its default configured DNS resolution, but also in addition, using a separate Docker DNS container running locally on the host. 
+
+In practice, on a Linux host, these are possible configs to achieve what was described above:
 
 - The docker daemon needs to be configured to run on the `docker0` bridge interface (with a static ip: 172.17.0.1) and then `dnsmasq` would bind to port 53 udp of this ip. For details, see the next section!
 - The host machine needs to be configured to use `resolvconf` and to add the Docker internal DNS (/etc/resolvconf/resolv.conf.d/head needs to have `nameserver 172.17.0.1`). You may need to do "sudo dpkg-reconfigure resolvconf".
 - Possibly, you may want to edit "/etc/dhcp/dhclient.conf" and add "prepend domain-name-servers 172.17.0.1;". But possibly not, seems to work without it.
-
-For name resolution, the classic solution is `dnsmasq` but there is also a more Docker-tailored variant that can be used; `dnsdock`, which seems to be popular as an alternative to "skydns" and other heavier service discovery solutions.
-
 
 ## Configuring the docker daemon on the host
 
@@ -31,6 +28,34 @@ Instructions below are taken from Docker Hub pages for the "dnsdock" image: http
 - If you do not, Open file /etc/default/docker and add --bip=172.17.0.1/24 --dns=172.17.0.1 to DOCKER_OPTS variable.
 
 Restart docker daemon after you have done that (sudo service docker restart or sudo systemctl restart docker.service respectively depending on your linux distro).
+
+## Walkthrough, step-by-step
+
+To figure out which nameservers you use currently, you can use some tool suitable for your platform. On Linux it could for example be a command like: `nm-tool | grep DNS` or for other ways to do it, see http://askubuntu.com/questions/152593/command-line-to-list-dns-servers-used-by-my-system.
+
+For your host machine to be able to use the Docker DNS server a few changes has to be made for the docker daemon and the IP of the Docker DNS server needs to be added to the nameserver list used by your host - on Linux this is done through the resolvconf configurations. To configure the Docker Daemon, create a file `/etc/docker/daemon.json` with the following content:
+
+	{
+		"dns": ["172.17.0.1", "your.corporate.network.nameserver1", "your.corporate.network.nameserver2", "8.8.8.8", 8.8.4.4"],
+		"bip": "172.17.0.1/24"
+	}
+
+The first IP is the IP of the dnsdock container. The second and third are nameserver used in your corporate network. The last two are public DNS server IPs offered by Google. To add the DNSdock's IP in the first line of resolv.conf in your host
+machine, do NOT edit that file, instead ensure you have 'resolvconf' package installed and add the following line to `/etc/resolvconf/resolv.conf.d/head`:
+
+	nameserver 172.17.0.1
+
+Then restart the service resolvconf
+
+	sudo service resolvconf restart # or equiv depending on your distro
+
+The DNSdock container IP is then added to resolv.conf, you can verify it with:
+
+	cat /etc/resolv.conf
+
+This should enable other services to identify each other using domain name besides container name and also be able to reach the Internet from within the containers.
+
+# Should you be using dnsmasq and/or dnsdock?
 
 ## dnsmasq
 
