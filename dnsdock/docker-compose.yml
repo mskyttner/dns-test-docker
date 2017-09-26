@@ -1,4 +1,4 @@
-version: '2'
+version: '3.1'
 
 services:
 
@@ -23,8 +23,14 @@ services:
 
   dnsdock:
 #    image: tonistiigi/dnsdock:amd64-1.13.1
-    image: aacebedo/dnsdock:v1.15.0-amd64
+#    image: aacebedo/dnsdock:v1.15.0-amd64
+#    image: bodsch/docker-dnsdock:1708-35.1
+    image: aacebedo/dnsdock:v1.16.4-amd64
+    command: --nameserver="8.8.8.8, 4.4.4.4"
+    environment:
+      - DNSDOCK_ALIAS=dnsdock
     ports:
       - 172.17.0.1:53:53/udp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+

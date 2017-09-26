@@ -25,7 +25,7 @@ test-dns-internal:
 test-dns-external:
 
 	# rest api
-	@curl -s http://dnsdock.docker/services | json_pp
+	@curl -s http://dnsdock/services | json_pp
 
 	# plain lookups
 	@nslookup c1

@@ -1,4 +1,4 @@
-version: '2'
+version: '3.1'
 
 services:
 
@@ -17,7 +17,7 @@ services:
 
   dnsmasq:
     image: andyshinn/dnsmasq:2.76
-    command: --log-facility=-
+    command: --server=8.8.8.8 --server=193.10.57.11 -log-facility=-
     cap_add: 
       - NET_ADMIN 
     ports:
